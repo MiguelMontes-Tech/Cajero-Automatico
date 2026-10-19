@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}{% if tipo == 'deposito' %}DEPOSITAR{% else %}RETIRAR{% endif %}{% endblock %}
+{% block contenido %}
+    {% if tipo == 'retiro' %}
+        <p class="subtitulo">Solo múltiplos de $10.000</p>
+    {% endif %}
+    <p class="subtitulo">Saldo actual: <strong>{{ cuenta.saldo|dinero }}</strong></p>
+
+    <form method="POST">
+        <label for="monto">Digite el monto</label>
+        <input type="text" id="monto" name="monto" inputmode="numeric" required autofocus>
+
+        <div class="rapidos">
+            <button type="button" onclick="document.getElementById('monto').value = 20000">$20.000</button>
+            <button type="button" onclick="document.getElementById('monto').value = 50000">$50.000</button>
+            <button type="button" onclick="document.getElementById('monto').value = 100000">$100.000</button>
+            <button type="button" onclick="document.getElementById('monto').value = 200000">$200.000</button>
+        </div>
+
+        <button type="submit" class="boton verde">CONFIRMAR</button>
+    </form>
+    <a class="boton rojo" href="{{ url_for('menu') }}">Cancelar</a>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}MENÚ PRINCIPAL{% endblock %}
+{% block contenido %}
+    <p class="subtitulo">Hola, {{ cuenta.nombre }}</p>
+    <a class="boton" href="{{ url_for('saldo') }}">Consultar saldo</a>
+    <a class="boton" href="{{ url_for('operacion', tipo='deposito') }}">Depositar dinero</a>
+    <a class="boton" href="{{ url_for('operacion', tipo='retiro') }}">Retirar dinero</a>
+    <a class="boton" href="{{ url_for('historial') }}">Historial de movimientos</a>
+    <a class="boton" href="{{ url_for('cambiar_pin') }}">Cambiar PIN</a>
+    <a class="boton rojo" href="{{ url_for('salir') }}">Cerrar sesión</a>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block titulo %}SALDO DISPONIBLE{% endblock %}
+{% block contenido %}
+    <p class="subtitulo">Cuenta: {{ numero }}</p>
+    <p class="saldo">{{ cuenta.saldo|dinero }}</p>
+    <a class="boton" href="{{ url_for('menu') }}">Volver al menú</a>
+{% endblock %}
