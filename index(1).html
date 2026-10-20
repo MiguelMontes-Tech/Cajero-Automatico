@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cajero automático</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo: #C9D6DF;
+    --cuerpo: #1F3A5F;
+    --cuerpo-oscuro: #0E1B33;
+    --pantalla: #EAF4EE;
+    --tinta: #10261E;
+    --amarillo: #F2B705;
+    --rojo: #B3261E;
+    --verde: #1E7A4C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--fondo);
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    color: var(--tinta);
+    padding: 24px 16px;
+  }
+
+  /* ---------- Cuerpo del cajero ---------- */
+  .cajero {
+    max-width: 840px;
+    margin: 0 auto;
+    background: var(--cuerpo);
+    border-radius: 28px;
+    padding: 22px;
+    box-shadow: 0 18px 0 -6px var(--cuerpo-oscuro), 0 30px 40px rgba(14, 27, 51, .35);
+  }
+  .marca {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    color: #fff;
+    margin: 0 4px 16px;
+  }
+  .marca h1 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: .02em; }
+  .marca span { font-size: .9rem; opacity: .75; }
+
+  .panel {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+  }
+
+  /* ---------- Pantalla ---------- */
+  .pantalla {
+    background: var(--pantalla);
+    border: 8px solid var(--cuerpo-oscuro);
+    border-radius: 18px;
+    padding: 22px;
+    min-height: 400px;
+    font-size: 1.05rem;
+    line-height: 1.45;
+  }
+  .pantalla h2 { margin: 0 0 6px; font-size: 1.6rem; font-weight: 800; }
+  .pantalla p { margin: 0 0 14px; max-width: 46ch; }
+  .monto {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 2.2rem;
+    font-weight: 500;
+    margin: 12px 0 22px !important;
+  }
+  .campo {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 1.8rem;
+    letter-spacing: .15em;
+    border: 2px solid var(--tinta);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 6px 0 14px;
+    background: #fff;
+    min-height: 62px;
+  }
+  .aviso {
+    border-left: 6px solid var(--tinta);
+    padding: 8px 12px;
+    background: rgba(16, 38, 30, .07);
+    border-radius: 0 8px 8px 0;
+    font-weight: 600;
+  }
+  .aviso.error { border-color: var(--rojo); color: var(--rojo); background: rgba(179, 38, 30, .08); }
+  .aviso.ok { border-color: var(--verde); color: var(--verde); background: rgba(30, 122, 76, .08); }
+
+  .rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .lista { display: grid; gap: 10px; margin-top: 8px; }
+  .acciones { display: flex; gap: 10px; flex-wrap: wrap; }
+  .op {
+    font: inherit;
+    font-weight: 600;
+    color: var(--tinta);
+    background: transparent;
+    border: 2px solid var(--tinta);
+    border-radius: 10px;
+    padding: 13px 16px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .op small { font-weight: 400; font-size: .9rem; }
+  .op:hover { background: var(--tinta); color: var(--pantalla); }
+  .op:focus-visible, .tecla:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 2px; }
+  .pantalla .op:focus-visible { outline-color: var(--cuerpo); }
+  .demo { font-size: .9rem; opacity: .8; margin-top: 16px !important; }
+
+  .movimientos { list-style: none; padding: 0; margin: 8px 0 18px; display: grid; gap: 8px; }
+  .movimientos li { border-bottom: 1px solid rgba(16, 38, 30, .25); padding-bottom: 8px; }
+  .movimientos small { display: block; opacity: .75; }
+
+  /* ---------- Teclado ---------- */
+  .teclado { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-content: start; }
+  .tecla {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--cuerpo);
+    background: #E9EEF3;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 0;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #9FB0C2;
+  }
+  .tecla:active { transform: translateY(3px); box-shadow: 0 1px 0 #9FB0C2; }
+  .tecla.cancelar { background: var(--rojo); color: #fff; box-shadow: 0 4px 0 #7A1913; font-size: .95rem; font-family: inherit; font-weight: 600; }
+  .tecla.corregir { background: var(--amarillo); color: #2A2200; box-shadow: 0 4px 0 #A07C00; font-size: .95rem; font-family: inherit; font-weight: 600; }
+  .tecla.confirmar { grid-column: 1 / -1; background: var(--verde); color: #fff; box-shadow: 0 4px 0 #11492E; font-family: inherit; font-size: 1.05rem; font-weight: 800; }
+
+  /* ---------- Bandeja: tarjeta y efectivo ---------- */
+  .bandeja { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 22px; }
+  .ranura-tarjeta, .ranura-efectivo { color: #fff; font-size: .85rem; }
+  .ranura-tarjeta .boca {
+    height: 14px; border-radius: 8px; background: var(--cuerpo-oscuro);
+    display: flex; align-items: center; justify-content: flex-end; padding: 0 8px; margin-top: 6px;
+  }
+  .led { width: 8px; height: 8px; border-radius: 50%; background: var(--amarillo); }
+  .led.espera { animation: parpadeo 1.2s infinite; }
+  .led.activa { background: #46D28B; }
+  .led.bloqueada { background: #FF5A4E; }
+  @keyframes parpadeo { 50% { opacity: .2; } }
+
+  .ranura-efectivo .boca { height: 14px; border-radius: 8px; background: var(--cuerpo-oscuro); margin-top: 6px; }
+  .billetes { height: 84px; overflow: hidden; position: relative; margin: 0 14px; }
+  .billete {
+    position: absolute; top: 0; height: 52px; width: 120px;
+    border-radius: 6px; border: 2px solid #5B3F85; background: #8E6BB3; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Mono", monospace; font-size: 1.3rem;
+    transform: translateY(-100%);
+    animation: sale .9s cubic-bezier(.2, .8, .3, 1) forwards;
+  }
+  @keyframes sale { to { transform: translateY(var(--baja)) rotate(var(--giro)); } }
+
+  @media (max-width: 720px) {
+    .panel { grid-template-columns: 1fr; }
+    .bandeja { grid-template-columns: 1fr; }
+    .pantalla { min-height: 340px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .billete { animation-duration: .01s; }
+    .led.espera { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<main class="cajero">
+  <div class="marca">
+    <h1>Banco Ejemplo</h1>
+    <span>Cajero automático</span>
+  </div>
+
+  <div class="panel">
+    <!-- Aquí se dibuja cada pantalla del cajero -->
+    <section class="pantalla" id="pantalla" aria-live="polite"></section>
+
+    <!-- Teclado numérico -->
+    <div class="teclado" aria-label="Teclado numérico">
+      <button class="tecla" onclick="pulsar('1')">1</button>
+      <button class="tecla" onclick="pulsar('2')">2</button>
+      <button class="tecla" onclick="pulsar('3')">3</button>
+      <button class="tecla" onclick="pulsar('4')">4</button>
+      <button class="tecla" onclick="pulsar('5')">5</button>
+      <button class="tecla" onclick="pulsar('6')">6</button>
+      <button class="tecla" onclick="pulsar('7')">7</button>
+      <button class="tecla" onclick="pulsar('8')">8</button>
+      <button class="tecla" onclick="pulsar('9')">9</button>
+      <button class="tecla cancelar" onclick="cancelar()">Cancelar</button>
+      <button class="tecla" onclick="pulsar('0')">0</button>
+      <button class="tecla corregir" onclick="corregir()">Corregir</button>
+      <button class="tecla confirmar" onclick="confirmar()">Confirmar</button>
+    </div>
+  </div>
+
+  <div class="bandeja">
+    <div class="ranura-tarjeta">
+      Ranura de tarjeta
+      <div class="boca"><span class="led espera" id="led"></span></div>
+    </div>
+    <div class="ranura-efectivo">
+      Bandeja de efectivo
+      <div class="boca"></div>
+      <div class="billetes" id="billetes"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+/*
+  ALGORITMO DEL CAJERO AUTOMÁTICO
+
+  1. El usuario elige una tarjeta (la inserta).
+  2. Escribe su PIN. Tiene 3 intentos; si falla los 3, la tarjeta se bloquea.
+  3. Si el PIN es correcto, ve el menú:
+       - Consultar saldo
+       - Retirar dinero  (valida múltiplo, límite y saldo suficiente)
+       - Depositar dinero (valida múltiplo y límite)
+       - Ver los últimos movimientos
+       - Cambiar el PIN
+  4. Al salir, el cajero devuelve la tarjeta y vuelve a la pantalla de inicio.
+*/
+
+// ---------- DATOS ----------
+// Cada cuenta es un objeto con sus datos. Son cuentas de prueba.
+const cuentas = [
+  { tarjeta: "4821", titular: "Ana Pérez",    pin: "1234", saldo: 1500000, movimientos: [], bloqueada: false },
+  { tarjeta: "7390", titular: "Carlos Gómez", pin: "4321", saldo: 320000,  movimientos: [], bloqueada: false }
+];
+
+// ---------- REGLAS DEL CAJERO ----------
+const LIMITE_RETIRO = 1000000;    // máximo por retiro
+const LIMITE_DEPOSITO = 3000000;  // máximo por depósito
+const MULTIPLO = 10000;           // solo hay billetes de 10.000 o más
+const MAX_INTENTOS = 3;
+
+// ---------- ESTADO ACTUAL ----------
+let cuenta = null;        // cuenta que está usando el cajero (null = nadie)
+let pantalla = "inicio";  // pantalla que se está mostrando
+let entrada = "";         // lo que el usuario escribe con el teclado
+let intentos = 0;         // intentos fallidos de PIN
+let pinNuevo = "";        // PIN nuevo mientras se confirma
+let mensaje = "";         // aviso que se muestra en pantalla
+let tipoMensaje = "";     // "error" u "ok"
+
+// Pantallas que piden escribir números: cuántos dígitos y si se ocultan
+const configEntrada = {
+  pin:         { max: 4, oculto: true },
+  retiroOtro:  { max: 8, oculto: false },
+  deposito:    { max: 8, oculto: false },
+  cambiarPin1: { max: 4, oculto: true },
+  cambiarPin2: { max: 4, oculto: true }
+};
+
+// ---------- FUNCIONES DE AYUDA ----------
+// Convierte 1500000 en "$ 1.500.000"
+function formato(n) {
+  return "$ " + n.toLocaleString("es-CO");
+}
+
+function aviso() {
+  if (mensaje === "") return "";
+  return '<p class="aviso ' + tipoMensaje + '" role="status">' + mensaje + "</p>";
+}
+
+// Cambia de pantalla
+function mostrar(nombre, msg, tipo) {
+  if (nombre !== "retiroOk") limpiarBilletes();
+  pantalla = nombre;
+  entrada = "";
+  mensaje = msg || "";
+  tipoMensaje = tipo || "";
+  render();
+  actualizarLed();
+}
+
+// Guarda un movimiento en el historial de la cuenta
+function registrar(tipo, monto) {
+  cuenta.movimientos.push({
+    tipo: tipo,
+    monto: monto,
+    saldo: cuenta.saldo,
+    fecha: new Date().toLocaleString("es-CO")
+  });
+}
+
+// ---------- DIBUJAR LA PANTALLA ----------
+function render() {
+  const p = document.getElementById("pantalla");
+  let html = "";
+
+  if (pantalla === "inicio") {
+    html = "<h2>Bienvenido</h2>" +
+      "<p>Inserte su tarjeta para comenzar.</p>" + aviso() +
+      '<div class="lista">';
+    for (let i = 0; i < cuentas.length; i++) {
+      const c = cuentas[i];
+      html += '<button class="op" onclick="elegirTarjeta(' + i + ')">' +
+        "Tarjeta •••• " + c.tarjeta +
+        "<small>" + c.titular + (c.bloqueada ? " (bloqueada)" : "") + "</small></button>";
+    }
+    html += "</div>" +
+      '<p class="demo">Datos de prueba: Ana Pérez, PIN 1234. Carlos Gómez, PIN 4321.</p>';
+  }
+
+  else if (pantalla === "pin") {
+    html = "<h2>Ingrese su PIN</h2>" +
+      "<p>Tarjeta •••• " + cuenta.tarjeta + ". Escriba los 4 dígitos y presione Confirmar.</p>" +
+      '<div class="campo" id="campo"></div>' + aviso();
+  }
+
+  else if (pantalla === "menu") {
+    html = "<h2>Hola, " + cuenta.titular.split(" ")[0] + "</h2>" +
+      "<p>¿Qué desea hacer?</p>" + aviso() +
+      '<div class="rejilla">' +
+      '<button class="op" onclick="mostrar(\'saldo\')">Consultar saldo</button>' +
+      '<button class="op" onclick="mostrar(\'retiro\')">Retirar dinero</button>' +
+      '<button class="op" onclick="mostrar(\'deposito\')">Depositar dinero</button>' +
+      '<button class="op" onclick="mostrar(\'movimientos\')">Últimos movimientos</button>' +
+      '<button class="op" onclick="mostrar(\'cambiarPin1\')">Cambiar PIN</button>' +
+      '<button class="op" onclick="terminar()">Salir</button>' +
+      "</div>";
+  }
+
+  else if (pantalla === "saldo") {
+    html = "<h2>Saldo disponible</h2>" +
+      '<p class="monto">' + formato(cuenta.saldo) + "</p>" +
+      '<div class="acciones">' +
+      '<button class="op" onclick="mostrar(\'menu\')">Volver al menú</button>' +
+      '<button class="op" onclick="terminar()">Salir</button></div>';
+  }
+
+  else if (pantalla === "retiro") {
+    html = "<h2>Retirar dinero</h2>" +
+      "<p>Elija un valor o escriba otro. Máximo " + formato(LIMITE_RETIRO) + " por retiro.</p>" + aviso() +
+      '<div class="rejilla">' +
+      '<button class="op" onclick="retirar(50000)">' + formato(50000) + "</button>" +
+      '<button class="op" onclick="retirar(100000)">' + formato(100000) + "</button>" +
+      '<button class="op" onclick="retirar(200000)">' + formato(200000) + "</button>" +
+      '<button class="op" onclick="retirar(500000)">' + formato(500000) + "</button>" +
+      '<button class="op" onclick="mostrar(\'retiroOtro\')">Otro valor</button>' +
+      '<button class="op" onclick="mostrar(\'menu\')">Volver al menú</button>' +
+      "</div>";
+  }
+
+  else if (pantalla === "retiroOtro") {
+    html = "<h2>Otro valor</h2>" +
+      "<p>Escriba el valor en múltiplos de " + formato(MULTIPLO) + " y presione Confirmar.</p>" +
+      '<div class="campo" id="campo"></div>' + aviso() +
+      '<button class="op" onclick="mostrar(\'retiro\')">Volver</button>';
+  }
+
+  else if (pantalla === "retiroOk") {
+    html = "<h2>Retiro exitoso</h2>" +
+      "<p>Retire su dinero de la bandeja de efectivo.</p>" +
+      "<p>Nuevo saldo: <strong>" + formato(cuenta.saldo) + "</strong></p>" +
+      '<button class="op" onclick="recogerDinero()">Ya retiré mi dinero</button>';
+  }
+
+  else if (pantalla === "deposito") {
+    html = "<h2>Depositar dinero</h2>" +
+      "<p>Escriba el valor en múltiplos de " + formato(MULTIPLO) + ". Máximo " + formato(LIMITE_DEPOSITO) + ".</p>" +
+      '<div class="campo" id="campo"></div>' + aviso() +
+      '<button class="op" onclick="mostrar(\'menu\')">Volver al menú</button>';
+  }
+
+  else if (pantalla === "depositoOk") {
+    html = "<h2>Depósito registrado</h2>" +
+      "<p>Nuevo saldo: <strong>" + formato(cuenta.saldo) + "</strong></p>" +
+      '<button class="op" onclick="mostrar(\'menu\')">Volver al menú</button>';
+  }
+
+  else if (pantalla === "movimientos") {
+    html = "<h2>Últimos movimientos</h2>";
+    if (cuenta.movimientos.length === 0) {
+      html += "<p>Todavía no hay movimientos en esta sesión.</p>";
+    } else {
+      html += '<ul class="movimientos">';
+      // Se muestran los 5 más recientes, el último primero
+      const ultimos = cuenta.movimientos.slice(-5).reverse();
+      for (let i = 0; i < ultimos.length; i++) {
+        const m = ultimos[i];
+        html += "<li>" + m.tipo + " de " + formato(m.monto) +
+          "<small>" + m.fecha + ". Saldo: " + formato(m.saldo) + "</small></li>";
+      }
+      html += "</ul>";
+    }
+    html += '<button class="op" onclick="mostrar(\'menu\')">Volver al menú</button>';
+  }
+
+  else if (pantalla === "cambiarPin1") {
+    html = "<h2>Cambiar PIN</h2>" +
+      "<p>Escriba su nuevo PIN de 4 dígitos y presione Confirmar.</p>" +
+      '<div class="campo" id="campo"></div>' + aviso() +
+      '<button class="op" onclick="mostrar(\'menu\')">Volver al menú</button>';
+  }
+
+  else if (pantalla === "cambiarPin2") {
+    html = "<h2>Confirme el nuevo PIN</h2>" +
+      "<p>Escriba otra vez el nuevo PIN y presione Confirmar.</p>" +
+      '<div class="campo" id="campo"></div>' + aviso() +
+      '<button class="op" onclick="mostrar(\'menu\')">Cancelar cambio</button>';
+  }
+
+  else if (pantalla === "despedida") {
+    html = "<h2>Gracias por usar el cajero</h2>" +
+      "<p>Retire su tarjeta.</p>" +
+      '<button class="op" onclick="retirarTarjeta()">Retirar tarjeta</button>';
+  }
+
+  else if (pantalla === "bloqueada") {
+    html = "<h2>Tarjeta bloqueada</h2>" +
+      "<p>Superó los " + MAX_INTENTOS + " intentos de PIN. La tarjeta fue retenida por seguridad.</p>" +
+      '<button class="op" onclick="retirarTarjeta()">Aceptar</button>';
+  }
+
+  p.innerHTML = html;
+  actualizarCampo();
+}
+
+// Muestra lo que el usuario va escribiendo
+function actualizarCampo() {
+  const campo = document.getElementById("campo");
+  if (!campo) return;
+  const config = configEntrada[pantalla];
+  if (config.oculto) {
+    campo.textContent = "•".repeat(entrada.length) + "–".repeat(config.max - entrada.length);
+  } else {
+    campo.textContent = entrada === "" ? "$ 0" : formato(Number(entrada));
+  }
+}
+
+// La luz de la ranura cambia según el estado
+function actualizarLed() {
+  const led = document.getElementById("led");
+  if (pantalla === "bloqueada") led.className = "led bloqueada";
+  else if (cuenta !== null) led.className = "led activa";
+  else led.className = "led espera";
+}
+
+// ---------- TECLADO ----------
+function pulsar(digito) {
+  const config = configEntrada[pantalla];
+  if (!config) return;                        // esta pantalla no pide números
+  if (entrada.length >= config.max) return;   // ya escribió el máximo
+  entrada += digito;
+  actualizarCampo();
+}
+
+function corregir() {
+  if (!configEntrada[pantalla]) return;
+  entrada = entrada.slice(0, -1);
+  actualizarCampo();
+}
+
+function confirmar() {
+  if (pantalla === "pin") validarPin();
+  else if (pantalla === "retiroOtro") retirar(Number(entrada));
+  else if (pantalla === "deposito") depositar(Number(entrada));
+  else if (pantalla === "cambiarPin1") pedirConfirmacionPin();
+  else if (pantalla === "cambiarPin2") guardarPinNuevo();
+}
+
+function cancelar() {
+  if (pantalla === "pin") retirarTarjeta();            // devuelve la tarjeta
+  else if (pantalla === "menu") terminar();            // sale
+  else if (pantalla === "retiroOk") recogerDinero();
+  else if (cuenta !== null && pantalla !== "despedida" && pantalla !== "bloqueada") mostrar("menu");
+}
+
+// ---------- OPERACIONES ----------
+function elegirTarjeta(i) {
+  if (cuentas[i].bloqueada) {
+    mostrar("inicio", "Esa tarjeta está bloqueada.", "error");
+    return;
+  }
+  cuenta = cuentas[i];
+  intentos = 0;
+  mostrar("pin");
+}
+
+function validarPin() {
+  if (entrada.length !== 4) {
+    mostrar("pin", "Escriba los 4 dígitos del PIN.", "error");
+    return;
+  }
+  if (entrada === cuenta.pin) {
+    intentos = 0;
+    mostrar("menu");
+  } else {
+    intentos++;
+    if (intentos >= MAX_INTENTOS) {
+      cuenta.bloqueada = true;
+      mostrar("bloqueada");
+    } else {
+      mostrar("pin", "PIN incorrecto. Intentos restantes: " + (MAX_INTENTOS - intentos) + ".", "error");
+    }
+  }
+}
+
+function retirar(monto) {
+  if (isNaN(monto) || monto <= 0) {
+    mostrar(pantalla, "Escriba un valor válido.", "error");
+  } else if (monto % MULTIPLO !== 0) {
+    mostrar(pantalla, "Solo se entregan valores en múltiplos de " + formato(MULTIPLO) + ".", "error");
+  } else if (monto > LIMITE_RETIRO) {
+    mostrar(pantalla, "El máximo por retiro es " + formato(LIMITE_RETIRO) + ".", "error");
+  } else if (monto > cuenta.saldo) {
+    mostrar(pantalla, "Saldo insuficiente. Su saldo es " + formato(cuenta.saldo) + ".", "error");
+  } else {
+    cuenta.saldo = cuenta.saldo - monto;
+    registrar("Retiro", monto);
+    mostrar("retiroOk");
+    entregarBilletes(monto);
+  }
+}
+
+function depositar(monto) {
+  if (isNaN(monto) || monto <= 0) {
+    mostrar("deposito", "Escriba un valor válido.", "error");
+  } else if (monto % MULTIPLO !== 0) {
+    mostrar("deposito", "Solo se reciben valores en múltiplos de " + formato(MULTIPLO) + ".", "error");
+  } else if (monto > LIMITE_DEPOSITO) {
+    mostrar("deposito", "El máximo por depósito es " + formato(LIMITE_DEPOSITO) + ".", "error");
+  } else {
+    cuenta.saldo = cuenta.saldo + monto;
+    registrar("Depósito", monto);
+    mostrar("depositoOk");
+  }
+}
+
+function pedirConfirmacionPin() {
+  if (entrada.length !== 4) {
+    mostrar("cambiarPin1", "El PIN debe tener 4 dígitos.", "error");
+    return;
+  }
+  pinNuevo = entrada;
+  mostrar("cambiarPin2");
+}
+
+function guardarPinNuevo() {
+  if (entrada !== pinNuevo) {
+    mostrar("cambiarPin1", "Los PIN no coinciden. Intente de nuevo.", "error");
+    return;
+  }
+  cuenta.pin = pinNuevo;
+  pinNuevo = "";
+  mostrar("menu", "PIN cambiado correctamente.", "ok");
+}
+
+function terminar() {
+  mostrar("despedida");
+}
+
+function retirarTarjeta() {
+  cuenta = null;
+  mostrar("inicio");
+}
+
+// ---------- EFECTIVO (animación de billetes) ----------
+function entregarBilletes(monto) {
+  const caja = document.getElementById("billetes");
+  caja.innerHTML = "";
+  // Entre 2 y 5 billetes dibujados, según el monto
+  const cantidad = Math.min(5, Math.max(2, Math.round(monto / 100000)));
+  for (let i = 0; i < cantidad; i++) {
+    const b = document.createElement("div");
+    b.className = "billete";
+    b.textContent = "$";
+    b.style.left = (i * 38) + "px";
+    b.style.setProperty("--baja", (6 + i * 5) + "px");
+    b.style.setProperty("--giro", ((i % 2 === 0 ? -1 : 1) * (2 + i)) + "deg");
+    b.style.animationDelay = (i * 0.15) + "s";
+    b.style.zIndex = i;
+    caja.appendChild(b);
+  }
+}
+
+function limpiarBilletes() {
+  document.getElementById("billetes").innerHTML = "";
+}
+
+function recogerDinero() {
+  mostrar("menu");
+}
+
+// ---------- TECLADO FÍSICO ----------
+document.addEventListener("keydown", function (e) {
+  if (e.key >= "0" && e.key <= "9" && e.key.length === 1) pulsar(e.key);
+  else if (e.key === "Backspace") corregir();
+  else if (e.key === "Escape") cancelar();
+  else if (e.key === "Enter" && e.target.tagName !== "BUTTON") confirmar();
+});
+
+// ---------- INICIO ----------
+mostrar("inicio");
+</script>
+</body>
+</html>
